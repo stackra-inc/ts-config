@@ -3,7 +3,7 @@
  *
  * This test suite verifies the ConfigService functionality including:
  * - Getting configuration values
- * - Type-safe getters (getString, getNumber, getBoolean)
+ * - Type-safe getters (getString, getNumber, getBool)
  * - Throwing methods (getOrThrow, getStringOrThrow)
  * - Default value handling
  * - Nested key access
@@ -39,8 +39,8 @@ describe('ConfigService', () => {
           timeout: 5000,
         },
       }),
-      get: vi.fn((key: string, defaultValue?: any) => {
-        const data: any = {
+      get: vi.fn((key: string, defaultValue?: unknown) => {
+        const data: Record<string, unknown> = {
           'app.name': 'Test App',
           'app.port': 3000,
           'app.debug': true,
@@ -49,7 +49,7 @@ describe('ConfigService', () => {
           'api.key': 'test-key-123',
         };
         return data[key] ?? defaultValue;
-      }),
+      }) as ConfigDriver['get'],
       has: vi.fn((key: string) => {
         const keys = [
           'app.name',
@@ -82,7 +82,7 @@ describe('ConfigService', () => {
 
     it("should return default value when key doesn't exist", () => {
       // Arrange: Mock missing key
-      mockDriver.get = vi.fn((key, defaultValue) => defaultValue);
+      mockDriver.get = vi.fn((_key, defaultValue) => defaultValue) as ConfigDriver['get'];
 
       // Act: Get with default
       const value = configService.get('missing.key', 'default');
@@ -93,7 +93,7 @@ describe('ConfigService', () => {
 
     it("should return undefined when key doesn't exist and no default", () => {
       // Arrange: Mock missing key
-      mockDriver.get = vi.fn(() => undefined);
+      mockDriver.get = vi.fn(() => undefined) as ConfigDriver['get'];
 
       // Act: Get without default
       const value = configService.get('missing.key');
@@ -140,7 +140,7 @@ describe('ConfigService', () => {
 
     it("should throw error when key doesn't exist", () => {
       // Arrange: Mock missing key
-      mockDriver.get = vi.fn(() => undefined);
+      mockDriver.get = vi.fn(() => undefined) as ConfigDriver['get'];
 
       // Act & Assert: Should throw
       expect(() => {
@@ -150,7 +150,7 @@ describe('ConfigService', () => {
 
     it('should throw with descriptive error message', () => {
       // Arrange: Mock missing key
-      mockDriver.get = vi.fn(() => undefined);
+      mockDriver.get = vi.fn(() => undefined) as ConfigDriver['get'];
 
       // Act & Assert: Should throw with message
       expect(() => {
@@ -171,7 +171,7 @@ describe('ConfigService', () => {
 
     it("should return default string when key doesn't exist", () => {
       // Arrange: Mock missing key
-      mockDriver.get = vi.fn((key, defaultValue) => defaultValue);
+      mockDriver.get = vi.fn((_key, defaultValue) => defaultValue) as ConfigDriver['get'];
 
       // Act: Get with default
       const value = configService.getString('missing.key', 'default');
@@ -182,7 +182,7 @@ describe('ConfigService', () => {
 
     it('should return undefined when no default provided', () => {
       // Arrange: Mock missing key
-      mockDriver.get = vi.fn(() => undefined);
+      mockDriver.get = vi.fn(() => undefined) as ConfigDriver['get'];
 
       // Act: Get without default
       const value = configService.getString('missing.key');
@@ -204,7 +204,7 @@ describe('ConfigService', () => {
 
     it("should throw when key doesn't exist", () => {
       // Arrange: Mock missing key
-      mockDriver.get = vi.fn(() => undefined);
+      mockDriver.get = vi.fn(() => undefined) as ConfigDriver['get'];
 
       // Act & Assert: Should throw
       expect(() => {
@@ -225,7 +225,7 @@ describe('ConfigService', () => {
 
     it("should return default number when key doesn't exist", () => {
       // Arrange: Mock missing key
-      mockDriver.get = vi.fn((key, defaultValue) => defaultValue);
+      mockDriver.get = vi.fn((_key, defaultValue) => defaultValue) as ConfigDriver['get'];
 
       // Act: Get with default
       const value = configService.getNumber('missing.key', 8080);
@@ -236,7 +236,7 @@ describe('ConfigService', () => {
 
     it('should parse string numbers', () => {
       // Arrange: Mock string number
-      mockDriver.get = vi.fn(() => '5432');
+      mockDriver.get = vi.fn(() => '5432') as ConfigDriver['get'];
 
       // Act: Get as number
       const port = configService.getNumber('database.port');
@@ -247,10 +247,10 @@ describe('ConfigService', () => {
     });
   });
 
-  describe.skip('getBoolean', () => {
+  describe('getBool', () => {
     it('should return boolean value', () => {
       // Act: Get boolean
-      const debug = configService.getBoolean('app.debug');
+      const debug = configService.getBool('app.debug');
 
       // Assert: Boolean is returned
       expect(debug).toBe(true);
@@ -259,15 +259,15 @@ describe('ConfigService', () => {
 
     it('should parse string booleans', () => {
       // Arrange: Mock string boolean
-      mockDriver.get = vi.fn((key) => {
+      mockDriver.get = vi.fn((key: string) => {
         if (key === 'feature.enabled') return 'true';
         if (key === 'feature.disabled') return 'false';
         return undefined;
-      });
+      }) as ConfigDriver['get'];
 
       // Act: Get as boolean
-      const enabled = configService.getBoolean('feature.enabled');
-      const disabled = configService.getBoolean('feature.disabled');
+      const enabled = configService.getBool('feature.enabled');
+      const disabled = configService.getBool('feature.disabled');
 
       // Assert: Parsed booleans are returned
       expect(enabled).toBe(true);
@@ -276,19 +276,19 @@ describe('ConfigService', () => {
 
     it('should handle truthy/falsy values', () => {
       // Arrange: Mock various values
-      mockDriver.get = vi.fn((key) => {
+      mockDriver.get = vi.fn((key: string) => {
         if (key === 'one') return 1;
         if (key === 'zero') return 0;
         if (key === 'yes') return 'yes';
         if (key === 'no') return 'no';
         return undefined;
-      });
+      }) as ConfigDriver['get'];
 
       // Act: Get as booleans
-      const one = configService.getBoolean('one');
-      const zero = configService.getBoolean('zero');
-      const yes = configService.getBoolean('yes');
-      const no = configService.getBoolean('no');
+      const one = configService.getBool('one');
+      const zero = configService.getBool('zero');
+      const yes = configService.getBool('yes');
+      const no = configService.getBool('no');
 
       // Assert: Values are converted to boolean
       expect(one).toBe(true);
@@ -301,7 +301,7 @@ describe('ConfigService', () => {
   describe('Edge Cases', () => {
     it('should handle null values', () => {
       // Arrange: Mock null value
-      mockDriver.get = vi.fn(() => null);
+      mockDriver.get = vi.fn(() => null) as ConfigDriver['get'];
 
       // Act: Get null value
       const value = configService.get('null.key');
@@ -312,7 +312,7 @@ describe('ConfigService', () => {
 
     it('should handle empty string values', () => {
       // Arrange: Mock empty string
-      mockDriver.get = vi.fn(() => '');
+      mockDriver.get = vi.fn(() => '') as ConfigDriver['get'];
 
       // Act: Get empty string
       const value = configService.getString('empty.key');
@@ -323,7 +323,7 @@ describe('ConfigService', () => {
 
     it('should handle zero values', () => {
       // Arrange: Mock zero
-      mockDriver.get = vi.fn(() => 0);
+      mockDriver.get = vi.fn(() => 0) as ConfigDriver['get'];
 
       // Act: Get zero
       const value = configService.getNumber('zero.key');

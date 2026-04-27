@@ -276,7 +276,7 @@ export class FileDriver implements ConfigDriver {
         const config = mod.default || mod;
         // Support factory functions
         return typeof config === 'function' ? await config() : config;
-      } catch (importError) {
+      } catch (_importError) {
         // Fallback: try reading as JSON-compatible content
         const content = readFileSync(filePath, 'utf-8');
         return JSON.parse(content);

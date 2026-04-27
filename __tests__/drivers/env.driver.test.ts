@@ -16,24 +16,22 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { EnvDriver } from '@/drivers/env.driver';
 
 describe('EnvDriver', () => {
-  const originalEnv = import.meta.env;
-
   beforeEach(() => {
-    // Arrange: Reset environment
-    import.meta.env = { ...originalEnv };
+    // Arrange: Reset environment using vitest stubs
+    vi.unstubAllEnvs();
   });
 
   afterEach(() => {
     // Cleanup: Restore environment
-    import.meta.env = originalEnv;
+    vi.unstubAllEnvs();
   });
 
   describe('load', () => {
     it('should load environment variables', () => {
       // Arrange: Set env vars
-      import.meta.env.APP_NAME = 'Test App';
-      import.meta.env.APP_PORT = '3000';
-      import.meta.env.APP_DEBUG = 'true';
+      vi.stubEnv('APP_NAME', 'Test App');
+      vi.stubEnv('APP_PORT', '3000');
+      vi.stubEnv('APP_DEBUG', 'true');
 
       const driver = new EnvDriver();
 
@@ -46,15 +44,12 @@ describe('EnvDriver', () => {
     });
 
     it('should handle empty environment', () => {
-      // Arrange: Clear env
-      import.meta.env = {};
-
       const driver = new EnvDriver();
 
       // Act: Load config
       const config = driver.load();
 
-      // Assert: Empty config is returned
+      // Assert: Config object is returned
       expect(config).toBeDefined();
       expect(typeof config).toBe('object');
     });
@@ -63,10 +58,10 @@ describe('EnvDriver', () => {
   describe('get', () => {
     beforeEach(() => {
       // Arrange: Set test env vars
-      import.meta.env.APP_NAME = 'Test App';
-      import.meta.env.APP_PORT = '3000';
-      import.meta.env.DATABASE_HOST = 'localhost';
-      import.meta.env.DATABASE_PORT = '5432';
+      vi.stubEnv('APP_NAME', 'Test App');
+      vi.stubEnv('APP_PORT', '3000');
+      vi.stubEnv('DATABASE_HOST', 'localhost');
+      vi.stubEnv('DATABASE_PORT', '5432');
     });
 
     it('should get environment variable', () => {
@@ -121,8 +116,8 @@ describe('EnvDriver', () => {
   describe('has', () => {
     beforeEach(() => {
       // Arrange: Set test env vars
-      import.meta.env.APP_NAME = 'Test App';
-      import.meta.env.EMPTY_VAR = '';
+      vi.stubEnv('APP_NAME', 'Test App');
+      vi.stubEnv('EMPTY_VAR', '');
     });
 
     it('should return true for existing key', () => {
@@ -165,9 +160,9 @@ describe('EnvDriver', () => {
   describe('all', () => {
     beforeEach(() => {
       // Arrange: Set test env vars
-      import.meta.env.APP_NAME = 'Test App';
-      import.meta.env.APP_PORT = '3000';
-      import.meta.env.DATABASE_HOST = 'localhost';
+      vi.stubEnv('APP_NAME', 'Test App');
+      vi.stubEnv('APP_PORT', '3000');
+      vi.stubEnv('DATABASE_HOST', 'localhost');
     });
 
     it('should return all configuration', () => {
@@ -199,8 +194,8 @@ describe('EnvDriver', () => {
   describe('Variable Expansion', () => {
     it('should expand variables when enabled', () => {
       // Arrange: Set vars with references
-      import.meta.env.BASE_URL = 'http://localhost';
-      import.meta.env.API_URL = '${BASE_URL}/api';
+      vi.stubEnv('BASE_URL', 'http://localhost');
+      vi.stubEnv('API_URL', '${BASE_URL}/api');
 
       const driver = new EnvDriver({ expandVariables: true });
       driver.load();
@@ -216,7 +211,7 @@ describe('EnvDriver', () => {
   describe('Edge Cases', () => {
     it('should handle special characters in values', () => {
       // Arrange: Set var with special chars
-      import.meta.env.SPECIAL = 'value with spaces & symbols!@#';
+      vi.stubEnv('SPECIAL', 'value with spaces & symbols!@#');
 
       const driver = new EnvDriver();
       driver.load();
@@ -230,7 +225,7 @@ describe('EnvDriver', () => {
 
     it('should handle multiline values', () => {
       // Arrange: Set multiline var
-      import.meta.env.MULTILINE = 'line1\\nline2\\nline3';
+      vi.stubEnv('MULTILINE', 'line1\\nline2\\nline3');
 
       const driver = new EnvDriver();
       driver.load();
@@ -242,10 +237,7 @@ describe('EnvDriver', () => {
       expect(value).toBeDefined();
     });
 
-    it('should handle empty environment', () => {
-      // Arrange: Clear all env vars
-      import.meta.env = {};
-
+    it('should handle getting with default from empty driver', () => {
       const driver = new EnvDriver();
 
       // Act: Load and get

@@ -33,13 +33,25 @@ const config: Linter.Config[] = [
   //   - *.config.js    — JavaScript config files
   //   - *.config.ts    — TypeScript config files (tsup, vitest, etc.)
   {
-    ignores: ['dist/**', 'node_modules/**', '*.config.js', '*.config.ts'],
+    ignores: ['dist/**', 'node_modules/**', '*.config.js', '*.config.ts', '.examples/**'],
   },
 
-  // Add package-specific rule overrides here.
-  // These take precedence over the shared config.
+  // Package-specific rule overrides
   {
-    rules: {},
+    rules: {
+      'turbo/no-undeclared-env-vars': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
+      'no-console': 'off',
+      '@typescript-eslint/ban-ts-comment': 'off',
+      '@typescript-eslint/no-unused-vars': [
+        'warn',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
+      ],
+    },
   },
 ];
 

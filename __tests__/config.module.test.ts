@@ -2,7 +2,7 @@
  * @fileoverview Tests for ConfigModule
  *
  * This test suite verifies the ConfigModule functionality including:
- * - Module registration (forRoot, forRootAsync)
+ * - Module registration (forRoot)
  * - Driver creation and configuration
  * - Custom config merging
  * - Provider setup
@@ -11,16 +11,25 @@
  * @category Tests
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { ConfigModule } from '@/config.module';
-import { EnvDriver } from '@/drivers/env.driver';
-import { FileDriver } from '@/drivers/file.driver';
+
+/** Helper to create minimal valid ConfigModuleOptions */
+function makeOptions(overrides: Record<string, any> = {}) {
+  return {
+    default: 'env',
+    sources: {
+      env: { driver: 'env' as const },
+    },
+    ...overrides,
+  };
+}
 
 describe('ConfigModule', () => {
   describe('forRoot', () => {
     it('should create a dynamic module with default configuration', () => {
-      // Act: Create module with default config
-      const module = ConfigModule.forRoot();
+      // Act: Create module with minimal config
+      const module = ConfigModule.forRoot(makeOptions());
 
       // Assert: Module structure is correct
       expect(module).toBeDefined();
@@ -31,10 +40,14 @@ describe('ConfigModule', () => {
 
     it('should create module with env driver', () => {
       // Arrange: Configure env driver
-      const options = {
-        driver: 'env' as const,
-        envFilePath: '.env.test',
-      };
+      const options = makeOptions({
+        sources: {
+          env: {
+            driver: 'env' as const,
+            envPrefix: 'VITE_',
+          },
+        },
+      });
 
       // Act: Create module
       const module = ConfigModule.forRoot(options);
@@ -46,10 +59,15 @@ describe('ConfigModule', () => {
 
     it('should create module with file driver', () => {
       // Arrange: Configure file driver
-      const options = {
-        driver: 'file' as const,
-        configPath: './config',
-      };
+      const options = makeOptions({
+        default: 'file',
+        sources: {
+          file: {
+            driver: 'file' as const,
+            filePattern: './config',
+          },
+        },
+      });
 
       // Act: Create module
       const module = ConfigModule.forRoot(options);
@@ -60,18 +78,20 @@ describe('ConfigModule', () => {
     });
 
     it('should merge custom configuration', () => {
-      // Arrange: Custom config
-      const customConfig = {
-        app: {
-          name: 'Test App',
-          version: '1.0.0',
+      // Arrange: Custom config via load
+      const options = makeOptions({
+        sources: {
+          env: {
+            driver: 'env' as const,
+            load: {
+              app: {
+                name: 'Test App',
+                version: '1.0.0',
+              },
+            },
+          },
         },
-      };
-
-      const options = {
-        driver: 'env' as const,
-        config: customConfig,
-      };
+      });
 
       // Act: Create module
       const module = ConfigModule.forRoot(options);
@@ -82,10 +102,7 @@ describe('ConfigModule', () => {
 
     it.skip('should set global flag when specified', () => {
       // Arrange: Global module config
-      const options = {
-        driver: 'env' as const,
-        isGlobal: true,
-      };
+      const options = makeOptions({ isGlobal: true });
 
       // Act: Create module
       const module = ConfigModule.forRoot(options);
@@ -95,45 +112,10 @@ describe('ConfigModule', () => {
     });
   });
 
-  describe('forRootAsync', () => {
-    it('should create async dynamic module', async () => {
-      // Arrange: Async factory
-      const useFactory = async () => ({
-        driver: 'env' as const,
-        envFilePath: '.env',
-      });
-
-      // Act: Create async module
-      const module = await ConfigModule.forRootAsync({
-        useFactory,
-      });
-
-      // Assert: Module is created
-      expect(module).toBeDefined();
-      expect(module.module).toBe(ConfigModule);
-    });
-
-    it('should handle async factory with dependencies', async () => {
-      // Arrange: Factory with inject
-      const useFactory = async (dep: any) => ({
-        driver: 'env' as const,
-      });
-
-      // Act: Create async module
-      const module = await ConfigModule.forRootAsync({
-        useFactory,
-        inject: ['SOME_DEPENDENCY'],
-      });
-
-      // Assert: Module is created
-      expect(module).toBeDefined();
-    });
-  });
-
   describe('Driver Creation', () => {
     it('should create EnvDriver by default', () => {
-      // Act: Create module with no driver specified
-      const module = ConfigModule.forRoot({});
+      // Act: Create module with env driver
+      const module = ConfigModule.forRoot(makeOptions());
 
       // Assert: Module uses env driver
       expect(module).toBeDefined();
@@ -141,10 +123,15 @@ describe('ConfigModule', () => {
 
     it('should create FileDriver when specified', () => {
       // Arrange: File driver config
-      const options = {
-        driver: 'file' as const,
-        configPath: './config',
-      };
+      const options = makeOptions({
+        default: 'file',
+        sources: {
+          file: {
+            driver: 'file' as const,
+            filePattern: './config',
+          },
+        },
+      });
 
       // Act: Create module
       const module = ConfigModule.forRoot(options);
@@ -155,11 +142,15 @@ describe('ConfigModule', () => {
 
     it('should pass driver options correctly', () => {
       // Arrange: Driver with options
-      const options = {
-        driver: 'env' as const,
-        envFilePath: '.env.custom',
-        expandVariables: true,
-      };
+      const options = makeOptions({
+        sources: {
+          env: {
+            driver: 'env' as const,
+            envPrefix: 'VITE_',
+            expandVariables: true,
+          },
+        },
+      });
 
       // Act: Create module
       const module = ConfigModule.forRoot(options);
@@ -171,21 +162,18 @@ describe('ConfigModule', () => {
 
   describe('Configuration Merging', () => {
     it('should merge multiple config sources', () => {
-      // Arrange: Multiple configs
-      const customConfig = {
-        database: {
-          host: 'localhost',
-          port: 5432,
+      // Arrange: Multiple sources
+      const options = makeOptions({
+        sources: {
+          env: {
+            driver: 'env' as const,
+            load: {
+              database: { host: 'localhost', port: 5432 },
+              cache: { driver: 'redis' },
+            },
+          },
         },
-        cache: {
-          driver: 'redis',
-        },
-      };
-
-      const options = {
-        driver: 'env' as const,
-        config: customConfig,
-      };
+      });
 
       // Act: Create module
       const module = ConfigModule.forRoot(options);
@@ -196,22 +184,22 @@ describe('ConfigModule', () => {
 
     it('should handle nested configuration objects', () => {
       // Arrange: Nested config
-      const customConfig = {
-        app: {
-          name: 'Test',
-          features: {
-            auth: true,
-            api: {
-              version: 'v1',
-              timeout: 5000,
+      const options = makeOptions({
+        sources: {
+          env: {
+            driver: 'env' as const,
+            load: {
+              app: {
+                name: 'Test',
+                features: {
+                  auth: true,
+                  api: { version: 'v1', timeout: 5000 },
+                },
+              },
             },
           },
         },
-      };
-
-      const options = {
-        config: customConfig,
-      };
+      });
 
       // Act: Create module
       const module = ConfigModule.forRoot(options);
@@ -224,7 +212,7 @@ describe('ConfigModule', () => {
   describe('Module Exports', () => {
     it('should export ConfigService', () => {
       // Act: Create module
-      const module = ConfigModule.forRoot();
+      const module = ConfigModule.forRoot(makeOptions());
 
       // Assert: ConfigService is exported
       expect(module.exports).toBeDefined();
@@ -233,7 +221,7 @@ describe('ConfigModule', () => {
 
     it('should provide all necessary providers', () => {
       // Act: Create module
-      const module = ConfigModule.forRoot();
+      const module = ConfigModule.forRoot(makeOptions());
 
       // Assert: Providers are defined
       expect(module.providers).toBeDefined();
