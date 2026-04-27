@@ -1,0 +1,128 @@
+{
+  "name": "@stackra/ts-config",
+  "version": "1.0.3",
+  "description": "Multi-source configuration management with multiple drivers (Env, File, HTTP) and DI integration",
+  "license": "MIT",
+  "author": {
+    "name": "Stackra L.L.C",
+    "email": "dev@stackra.com",
+    "url": "https://github.com/stackra-inc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/stackra-inc/ts-config.git"
+  },
+  "bugs": {
+    "url": "https://github.com/stackra-inc/ts-config/issues"
+  },
+  "homepage": "https://github.com/stackra-inc/ts-config#readme",
+  "keywords": [
+    "react",
+    "config",
+    "configuration",
+    "environment",
+    "nestjs",
+    "env",
+    "dotenv",
+    "dependency-injection",
+    "di"
+  ],
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "@types",
+    "config",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "clean": "rm -rf dist node_modules/.cache",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --max-warnings 0",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "prepublishOnly": "pnpm run build",
+    "release": "pnpm publish --access public --no-git-checks",
+    "prepare": "husky"
+  },
+  "peerDependencies": {
+    "@stackra/ts-container": "^2.0.10",
+    "@stackra/ts-http": "^1.0.0",
+    "@stackra/ts-support": "^2.5.7",
+    "fast-glob": "^3.3.3",
+    "vite": "^8.0.10"
+  },
+  "peerDependenciesMeta": {
+    "@stackra/ts-container": {
+      "optional": false
+    },
+    "@stackra/ts-support": {
+      "optional": false
+    },
+    "@stackra/ts-http": {
+      "optional": true
+    },
+    "fast-glob": {
+      "optional": true
+    },
+    "vite": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^20.5.2",
+    "@commitlint/config-conventional": "^20.5.0",
+    "@commitlint/types": "^20.5.0",
+    "@eslint/js": "10.0.1",
+    "@stackra/eslint-config": "^1.0.6",
+    "@stackra/prettier-config": "^1.0.4",
+    "@stackra/tsup-config": "^1.0.4",
+    "@stackra/typescript-config": "^1.0.5",
+    "@types/node": "^25.6.0",
+    "@vitest/ui": "^4.1.5",
+    "dotenv": "^17.4.2",
+    "eslint": "10.2.1",
+    "husky": "^9.1.7",
+    "jsdom": "^29.1.0",
+    "lint-staged": "^16.4.0",
+    "prettier": "^3.8.3",
+    "tsup": "^8.5.1",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.59.0",
+    "vite": "^8.0.10",
+    "vitest": "^4.1.5"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "engines": {
+    "node": ">=22",
+    "pnpm": ">=9.0.0"
+  },
+  "sideEffects": false,
+  "packageManager": "pnpm@10.33.2",
+  "pnpm": {
+    "overrides": {
+      "eslint": "^9.28.0",
+      "@eslint/js": "^9.28.0",
+      "vite": "^7.2.6"
+    }
+  }
+}
