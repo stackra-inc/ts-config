@@ -2,28 +2,32 @@
  * Config Package Configuration
  *
  * Configuration for the @stackra/ts-config package.
- * Defines how configuration is loaded and accessed across the application.
+ * Defines how environment variables are loaded and accessed
+ * through the ConfigFacade and ConfigManager.
  *
- * ## Available Drivers
+ * ## Environment Variables
  *
- * | Driver   | Source                                      |
- * |----------|---------------------------------------------|
- * | `'env'`  | `import.meta.env` or `window.__APP_CONFIG__`    |
- * | `'file'` | TypeScript/JavaScript/JSON config files      |
- * | `'http'` | Remote HTTP endpoint (API, AWS, Firebase)    |
+ * | Variable              | Description                          | Default   |
+ * |-----------------------|--------------------------------------|-----------|
+ * | `VITE_CONFIG_DRIVER`  | Default config source driver         | `'env'`   |
+ * | `VITE_APP_NAME`       | Application name (stripped to APP_NAME) | —      |
+ * | `VITE_*`              | All VITE_ prefixed vars are auto-stripped | —    |
  *
  * @module config/config
  */
 
-import { defineConfig } from '@stackra/config';
+import { defineConfig } from '@stackra/ts-config';
 
 /**
- * Config Configuration
+ * Config configuration.
+ *
+ * Uses the `sources` structure to define named configuration sources.
+ * The `default` key selects which source is used by `ConfigFacade.source()`.
  *
  * @example
  * ```typescript
  * // In app.module.ts
- * import { configConfig } from '@/config/config.config';
+ * import configConfig from '@/config/config.config';
  *
  * @Module({
  *   imports: [ConfigModule.forRoot(configConfig)],
@@ -31,182 +35,92 @@ import { defineConfig } from '@stackra/config';
  * export class AppModule {}
  * ```
  */
-export const configConfig = defineConfig({
-  // ── Module-level options ─────────────────────────────────────────────
-
-  /**
-   * Default config source name.
-   * Must match one of the keys in `sources`.
-   */
+const configConfig = defineConfig({
+  /*
+  |--------------------------------------------------------------------------
+  | Default Source
+  |--------------------------------------------------------------------------
+  |
+  | The name of the default configuration source. Must match a key
+  | in the `sources` object below.
+  |
+  */
   default: 'env',
 
-  /**
-   * Make config globally available to all modules.
-   * @default true
-   */
-  // isGlobal: true,
-
-  /**
-   * Enable debug logging for all driver operations.
-   * @default false
-   */
-  // debug: false,
-
-  /**
-   * Keys to redact in `config.toSafeObject()` output.
-   * Prevents accidental exposure in logs, error reports, or dumps.
-   */
-  // sensitiveKeys: ['JWT_SECRET', 'DB_PASSWORD', 'API_KEY', 'STRIPE_SECRET'],
-
-  /**
-   * Validate the default source's config after loading.
-   * Throw an error to reject invalid configuration.
-   */
-  // validate: (config) => {
-  //   if (!config.APP_NAME) {
-  //     throw new Error('APP_NAME is required');
-  //   }
-  // },
-
-  // ── Named sources ───────────────────────────────────────────────────
-
+  /*
+  |--------------------------------------------------------------------------
+  | Configuration Sources
+  |--------------------------------------------------------------------------
+  |
+  | Named source configurations. Each source has a `driver` field that
+  | determines how configuration values are loaded.
+  |
+  | Drivers:
+  |   - 'env'       : Reads from import.meta.env (browser) or process.env (Node)
+  |   - 'file'      : Reads from a JSON/YAML file
+  |   - 'http'      : Fetches config from a remote endpoint
+  |   - 'api'       : Reads from a REST API with auth
+  |   - 'firebase'  : Reads from Firebase Remote Config
+  |   - 'appconfig' : Reads from AWS AppConfig
+  |
+  */
   sources: {
-    // ── Env Driver ───────────────────────────────────────────────────
+    /**
+     * Environment variable source.
+     *
+     * Reads from `import.meta.env` in the browser. The `envPrefix`
+     * option auto-detects and strips VITE_ or NEXT_PUBLIC_ prefixes
+     * so that `VITE_APP_NAME` becomes accessible as `APP_NAME`.
+     *
+     * @default 'env'
+     */
     env: {
-      /**
-       * Reads from `import.meta.env` (Node.js) or `window.__APP_CONFIG__` (browser).
-       * The Vite plugin injects env vars into the browser global at build time.
-       */
       driver: 'env',
 
       /**
        * Auto-detect and strip environment variable prefix.
-       * - 'auto' — detects VITE_ or NEXT_PUBLIC_ and strips it
-       * - 'VITE_' — strips VITE_ prefix (VITE_APP_NAME → APP_NAME)
-       * - 'NEXT_PUBLIC_' — strips NEXT_PUBLIC_ prefix
-       * - false — disable prefix stripping
+       * 'auto' detects VITE_ or NEXT_PUBLIC_ and strips it.
        * @default 'auto'
        */
       envPrefix: 'auto',
-
-      /**
-       * Expand ${VAR} references in values.
-       * e.g. API_URL=${BASE_URL}/api → API_URL=http://localhost/api
-       * @default false
-       */
-      // expandVariables: false,
-
-      /**
-       * Custom browser global variable name.
-       * The Vite plugin injects config into window[globalName].
-       * @default '__APP_CONFIG__'
-       */
-      // globalName: '__APP_CONFIG__',
-
-      /**
-       * Merge additional config on top of the driver's loaded values.
-       * Supports static objects or async factory functions.
-       */
-      // load: { APP_VERSION: '1.0.0' },
-      // load: async () => {
-      //   const res = await fetch('/api/feature-flags');
-      //   return res.json();
-      // },
     },
 
-    // ── File Driver ──────────────────────────────────────────────────
-    // Uncomment to enable file-based configuration scanning.
+    // ── Commented-out driver examples ─────────────────────────────
     //
     // file: {
-    //   /**
-    //    * Scans for .config.ts files and merges their exports.
-    //    */
     //   driver: 'file',
-    //
-    //   /**
-    //    * Glob pattern(s) to match config files.
-    //    * @default 'src/**/*.config.ts'
-    //    */
-    //   filePattern: ['config/**/*.config.ts', 'src/**/*.config.ts'],
-    //
-    //   /**
-    //    * Root directory for scanning.
-    //    * @default process.cwd()
-    //    */
-    //   // fileRoot: process.cwd(),
-    //
-    //   /**
-    //    * Directories to exclude from scanning.
-    //    * @default ['node_modules', 'dist', 'build', '.git']
-    //    */
-    //   // fileExcludeDirs: ['node_modules', 'dist', 'build', '.git'],
-    //
-    //   /**
-    //    * Pre-loaded config object (skips file scanning).
-    //    * Useful in browser environments where fs is not available.
-    //    */
-    //   // config: { database: { host: 'localhost', port: 5432 } },
+    //   path: './config/app.json',
+    //   format: 'json',
     // },
-
-    // ── HTTP Driver — REST API ───────────────────────────────────────
-    // Uncomment to fetch config from a REST API endpoint.
+    //
+    // http: {
+    //   driver: 'http',
+    //   url: 'https://config.example.com/api/config',
+    //   headers: { Authorization: 'Bearer <token>' },
+    //   ttl: 300,
+    // },
     //
     // api: {
-    //   driver: 'http',
-    //   http: {
-    //     /**
-    //      * URL (or path relative to HttpClient's baseURL).
-    //      */
-    //     url: '/api/config',
-    //
-    //     /**
-    //      * Retry on failure.
-    //      * @default 0
-    //      */
-    //     // retries: 3,
-    //
-    //     /**
-    //      * Delay between retries in ms.
-    //      * @default 1000
-    //      */
-    //     // retryDelay: 2000,
-    //   },
+    //   driver: 'api',
+    //   baseUrl: 'https://api.example.com',
+    //   endpoint: '/config',
+    //   auth: { type: 'bearer', token: '<token>' },
     // },
-
-    // ── HTTP Driver — AWS AppConfig ──────────────────────────────────
-    // Uncomment to fetch config from AWS AppConfig via the HTTP data plane.
-    // Requires the AppConfig Agent running locally or as a Lambda extension.
-    //
-    // appconfig: {
-    //   driver: 'http',
-    //   http: {
-    //     url: 'http://localhost:2772/applications/MyApp/environments/prod/configurations/MyConfig',
-    //     retries: 3,
-    //     retryDelay: 2000,
-    //   },
-    // },
-
-    // ── HTTP Driver — Firebase Remote Config ─────────────────────────
-    // Uncomment to fetch config from Firebase Remote Config REST API.
-    // Auth is handled by HttpClient (configure in HttpModule.forRoot).
     //
     // firebase: {
-    //   driver: 'http',
-    //   http: {
-    //     url: 'https://firebaseremoteconfig.googleapis.com/v1/projects/my-project/remoteConfig',
-    //     /**
-    //      * Firebase wraps values in a nested structure.
-    //      * Transform normalizes it into a flat config object.
-    //      */
-    //     transform: (data) => {
-    //       const params: Record<string, any> = {};
-    //       for (const [key, value] of Object.entries(data.parameters || {})) {
-    //         params[key] = (value as any).defaultValue?.value;
-    //       }
-    //       return params;
-    //     },
-    //     retries: 2,
-    //   },
+    //   driver: 'firebase',
+    //   projectId: 'my-project',
+    //   fetchInterval: 3600,
+    // },
+    //
+    // appconfig: {
+    //   driver: 'appconfig',
+    //   application: 'my-app',
+    //   environment: 'production',
+    //   configuration: 'feature-flags',
+    //   region: 'us-east-1',
     // },
   },
 });
+
+export default configConfig;
