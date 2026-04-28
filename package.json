@@ -1,6 +1,6 @@
 {
   "name": "@stackra/ts-config",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Multi-source configuration management with multiple drivers (Env, File, HTTP) and DI integration",
   "license": "MIT",
   "author": {
